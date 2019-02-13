@@ -218,6 +218,64 @@ def add_article():
     return render_template('add_article.html', form = form)
 
 
+@app.route('/edit_article/<string:id>/', methods=['GET', 'POST'])
+@is_logged_in
+def edit_article(id):
+    form = ArticleForm(request.form)
+
+    # Create curson
+    cur = mysql.connection.cursor()
+
+    # Execute
+    cur.execute("SELECT * FROM articles WHERE id = %s", [id])
+
+    article = cur.fetchone()
+
+    form.title.data = article['title']
+    form.body.data = article['body']
+
+
+
+    if request.method == 'POST' and form.validate():
+        title = request.form['title']
+        body = request.form['body']
+
+        #Create cursor
+        cur = mysql.connection.cursor()
+
+        # Execute
+        cur.execute("UPDATE articles SET title = %s, body = %s WHERE id = %s", (title, body, id))
+
+        # Commit
+        mysql.connection.commit()
+
+        # Close
+        cur.close()
+
+        flash('Your article has been updated', 'success')
+
+        return redirect(url_for('dashboard'))
+
+    return render_template('edit_article.html', form=form)
+
+
+@app.route('/delete_article/<string:id>/', methods = ['POST'])
+@is_logged_in
+def delete_article(id):
+    cur = mysql.connection.cursor()
+
+    cur.execute("DELETE FROM articles WHERE id = %s", [id])
+
+    mysql.connection.commit()
+
+    cur.close()
+
+    flash('Your article had been deleted', 'success')
+
+    return redirect(url_for('dashboard'))
+
+
+
 
 
 
